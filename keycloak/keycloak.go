@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"local.packages/token"
+	"github.com/manaty226/kong-go-plugin-keycloak-authz/token"
 )
 
 // IKeycloak is an interface of Keycloak

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"local.packages/keycloak"
-	"local.packages/response"
-	"local.packages/token"
+	"github.com/manaty226/kong-go-plugin-keycloak-authz/keycloak"
+	"github.com/manaty226/kong-go-plugin-keycloak-authz/response"
+	"github.com/manaty226/kong-go-plugin-keycloak-authz/token"
 
 	"github.com/Kong/go-pdk"
 )

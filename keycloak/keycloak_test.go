@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"local.packages/keycloak"
-	"local.packages/token"
+	"keycloak/keycloak"
+	"token/token"
 )
 
 type keycloakTokenRes struct {
