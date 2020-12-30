@@ -1,0 +1,43 @@
+version: "3.0"
+services: 
+    kong:
+        container_name: kong
+        build: .
+        environment:
+            KONG_DATABASE: "off"
+            KONG_GO_PLUGINS_DIR: "/tmp/go-plugins"
+            KONG_DECLARATIVE_CONFIG: "/tmp/config.yml"
+            KONG_PLUGINS: "go-keycloak"
+            KONG_PROXY_LISTEN: "0.0.0.0:8081"
+            KONG_ADMIN_LISTEN: "0.0.0.0:8080"
+        ports:
+            - 8081:8081
+    
+    keycloak:
+        container_name: keycloak
+        image: jboss/keycloak
+        volumes: 
+            - ./test/realm/:/config/
+        command: >
+            -Djboss.bind.address.private=127.0.0.1 -Djboss.bind.address=0.0.0.0
+            -Dkeycloak.profile.feature.account_api=disabled
+            -Dkeycloak.profile.feature.account2=disabled
+            -Dkeycloak.migration.action=import
+            -Dkeycloak.migration.provider=singleFile
+            -Dkeycloak.migration.file=/config/test-realm.json
+            -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+        environment:
+            KEYCLOAK_USER: test
+            KEYCLOAK_PASSWORD: test-go-plugin
+            KEYCLOAK_IMPORT: /config/test-realm.json
+        ports:
+            - 8080:8080
+    # konga:
+    #     image: pantsel/konga
+    #     ports:
+    #       - 8080:1337
+    #     links:
+    #       - kong:kong
+    #     container_name: konga
+    #     environment:
+    #       - NODE_ENV=production

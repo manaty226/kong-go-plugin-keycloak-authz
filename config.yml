@@ -1,0 +1,10 @@
+_format_version: "1.1"
+services:
+- url: http://example.com
+  routes:
+  - paths:
+    - "/"
+  plugins:
+  - name: go-keycloak
+    config:
+      message: hello
