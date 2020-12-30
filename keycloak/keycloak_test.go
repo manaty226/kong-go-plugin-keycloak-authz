@@ -9,8 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"keycloak/keycloak"
-	"token/token"
+	"github.com/manaty226/kong-go-plugin-keycloak-authz/token"
 )
 
 type keycloakTokenRes struct {
@@ -73,7 +72,7 @@ func Test_Keycloak(t *testing.T) {
 	}
 
 	newToken, _ := token.NewToken("Bearer " + accessToken)
-	kc := keycloak.Keycloak{
+	kc := Keycloak{
 		Token:        newToken,
 		ClientID:     ClientID,
 		Secret:       ClientSecret,

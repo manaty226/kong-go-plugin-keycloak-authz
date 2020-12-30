@@ -2,12 +2,10 @@ package response
 
 import (
 	"testing"
-
-	"local.packages/response"
 )
 
 func Test_AuthError(t *testing.T) {
-	statusCode, respBody, headers := response.AuthErrorResponse()
+	statusCode, respBody, headers := AuthErrorResponse()
 
 	if statusCode != 403 {
 		t.Errorf("invalid status code")
