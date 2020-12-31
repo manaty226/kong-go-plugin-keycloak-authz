@@ -43,6 +43,20 @@ func NewToken(auth string) (token *Token, err error) {
 	return token, nil
 }
 
+// HasRole checks the token contains arg roles
+func (t *Token) HasRole(roles []string) (hasRole bool) {
+
+	return true
+}
+
+func (t *Token) hasRealmRole(role string) (hasRole bool) {
+	return true
+}
+
+func (t *Token) hasApplicationRole(role string) (hasRole bool) {
+	return true
+}
+
 // GetJwt is to get raw jwt token
 func (t *Token) GetJwt() (jwt string) {
 	return t.jwt
