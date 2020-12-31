@@ -28,10 +28,11 @@ type jwtHeader struct {
 }
 
 type jwtContent struct {
-	Exp int64  `json:"exp"`
-	Sub string `json:"sub"`
-	Iss string `json:"iss"`
-	Aud string `json:"aud"`
+	Exp        int64  `json:"exp"`
+	Sub        string `json:"sub"`
+	Iss        string `json:"iss"`
+	Aud        string `json:"aud"`
+	realmRoles map[string]string
 }
 
 // NewToken is as constructor of Token
@@ -44,17 +45,49 @@ func NewToken(auth string) (token *Token, err error) {
 }
 
 // HasRole checks the token contains arg roles
-func (t *Token) HasRole(roles []string) (hasRole bool) {
+func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
 
-	return true
+	for _, role := range roles {
+		splitRole := strings.Split(role, ":")
+		if len(splitRole) == 1 {
+			return t.hasApplicationRole(clientId, splitRole[0])
+		} else if splitRole[0] == "realm" {
+			return t.hasRealmRole(splitRole[1])
+		}
+	}
+
+	return t.hasApplicationRole(splitRole[0], splitRole[1])
 }
 
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
-	return true
+
+	roles, err := t.getRealmRoles()
+	if err != nil {
+		return false
+	}
+
+	if role, hasKey := roles[role]; hasKey {
+		return true
+	} else {
+		return false
+	}
 }
 
-func (t *Token) hasApplicationRole(role string) (hasRole bool) {
-	return true
+func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
+
+	if resourceAccess, err := t.getResourceAccess(); err != nil {
+		return false
+	}
+
+	if appRoles, err := t.getAppRoles(app); err != nil {
+		return false
+	}
+
+	if role, hasKey := appRoles[role]; hasKey {
+		return true
+	}
+
+	return false
 }
 
 // GetJwt is to get raw jwt token
