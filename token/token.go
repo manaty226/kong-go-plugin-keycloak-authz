@@ -66,29 +66,8 @@ func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
 
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
 
-	roles, err := t.getRealmRoles()
-	if err != nil {
-		return false
-	}
-
-	if _, hasKey := roles[role]; hasKey {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (t *Token) getRealmRoles() (roles map[string]string, err error) {
-	var res = map[string]string{}
-	return res, nil
-}
-
-func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
-
-	if appRoles, err := t.getAppRoles(app); err != nil {
-		return false
-	} else {
-		if _, hasKey := appRoles[role]; hasKey {
+	for _, roleName := range RealmAccess {
+		if role == roleName {
 			return true
 		}
 	}
@@ -96,9 +75,16 @@ func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
 	return false
 }
 
-func (t *Token) getAppRoles(app string) (roles map[string]string, err error) {
-	var res = map[string]string{}
-	return res, nil
+func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
+
+	if appRoles, hasKey := t.Content.ResourceAccess[app]; hasKey {
+		for _, roleName := range appRoles {
+			if role == roleName {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GetJwt is to get raw jwt token
