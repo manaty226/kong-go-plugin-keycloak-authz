@@ -64,9 +64,19 @@ func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
 	return t.hasApplicationRole(splitRole[0], splitRole[1])
 }
 
+// GetJwt is to get raw jwt token
+func (t *Token) GetJwt() (jwt string) {
+	return t.jwt
+}
+
+// IsExpired checks if the token is expired
+func (t *Token) IsExpired() (isExpired bool) {
+	return t.Content.Exp < time.Now().Unix()
+}
+
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
 
-	for _, tokenRole := range RealmAccess {
+	for _, tokenRole := range t.Content.RealmAccess.Roles {
 		if role == tokenRole {
 			return true
 		}
@@ -77,24 +87,14 @@ func (t *Token) hasRealmRole(role string) (hasRole bool) {
 
 func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
 
-	if appRoles, hasKey := t.Content.ResourceAccess[app]; hasKey {
-		for _, tokenRole := range appRoles {
+	if resourceAccess, hasKey := t.Content.ResourceAccess[app]; hasKey {
+		for _, tokenRole := range resourceAccess.Roles {
 			if role == tokenRole {
 				return true
 			}
 		}
 	}
 	return false
-}
-
-// GetJwt is to get raw jwt token
-func (t *Token) GetJwt() (jwt string) {
-	return t.jwt
-}
-
-// IsExpired checks if the token is expired
-func (t *Token) IsExpired() (isExpired bool) {
-	return t.Content.Exp < time.Now().Unix()
 }
 
 func parseAccessToken(auth string, token *Token) (err error) {
@@ -117,10 +117,6 @@ func parseAccessToken(auth string, token *Token) (err error) {
 	if err := json.Unmarshal(content, &token.Content); err != nil {
 		return err
 	}
-
-	fmt.Printf("%v \n", string(content))
-
-	fmt.Printf("token is %v \n", token.Content.ResourceAccess)
 
 	token.Signature = splitAccessToken[2]
 
