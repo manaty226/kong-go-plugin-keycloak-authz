@@ -66,8 +66,8 @@ func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
 
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
 
-	for _, roleName := range RealmAccess {
-		if role == roleName {
+	for _, tokenRole := range RealmAccess {
+		if role == tokenRole {
 			return true
 		}
 	}
@@ -78,8 +78,8 @@ func (t *Token) hasRealmRole(role string) (hasRole bool) {
 func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
 
 	if appRoles, hasKey := t.Content.ResourceAccess[app]; hasKey {
-		for _, roleName := range appRoles {
-			if role == roleName {
+		for _, tokenRole := range appRoles {
+			if role == tokenRole {
 				return true
 			}
 		}
