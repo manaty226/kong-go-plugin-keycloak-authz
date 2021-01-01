@@ -34,7 +34,7 @@ type permission struct {
 
 // Protect checks authentication and role of a received token
 func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
-	return kc.Token.HasRole(roles)
+	return kc.Token.HasRole(roles, kc.ClientID)
 }
 
 // Enforce checks permissions of a received token
@@ -69,9 +69,6 @@ func (kc *Keycloak) checkPermissions(expectedPermissions map[string][]string) (i
 	if err != nil {
 		return false
 	}
-
-	// fmt.Printf("%v \n", permissions)
-
 	return true
 }
 

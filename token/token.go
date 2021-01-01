@@ -28,11 +28,16 @@ type jwtHeader struct {
 }
 
 type jwtContent struct {
-	Exp        int64  `json:"exp"`
-	Sub        string `json:"sub"`
-	Iss        string `json:"iss"`
-	Aud        string `json:"aud"`
-	realmRoles map[string]string
+	Exp            int64            `json:"exp"`
+	Sub            string           `json:"sub"`
+	Iss            string           `json:"iss"`
+	Aud            string           `json:"aud"`
+	RealmAccess    roles            `json:"realm_access"`
+	ResourceAccess map[string]roles `json:"resource_access"`
+}
+
+type roles struct {
+	Roles []string `json:"roles"`
 }
 
 // NewToken is as constructor of Token
@@ -46,16 +51,16 @@ func NewToken(auth string) (token *Token, err error) {
 
 // HasRole checks the token contains arg roles
 func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
+	var splitRole []string
 
 	for _, role := range roles {
-		splitRole := strings.Split(role, ":")
+		splitRole = strings.Split(role, ":")
 		if len(splitRole) == 1 {
-			return t.hasApplicationRole(clientId, splitRole[0])
+			return t.hasApplicationRole(clientID, splitRole[0])
 		} else if splitRole[0] == "realm" {
 			return t.hasRealmRole(splitRole[1])
 		}
 	}
-
 	return t.hasApplicationRole(splitRole[0], splitRole[1])
 }
 
@@ -66,28 +71,34 @@ func (t *Token) hasRealmRole(role string) (hasRole bool) {
 		return false
 	}
 
-	if role, hasKey := roles[role]; hasKey {
+	if _, hasKey := roles[role]; hasKey {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
+func (t *Token) getRealmRoles() (roles map[string]string, err error) {
+	var res = map[string]string{}
+	return res, nil
+}
 
-	if resourceAccess, err := t.getResourceAccess(); err != nil {
-		return false
-	}
+func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
 
 	if appRoles, err := t.getAppRoles(app); err != nil {
 		return false
-	}
-
-	if role, hasKey := appRoles[role]; hasKey {
-		return true
+	} else {
+		if _, hasKey := appRoles[role]; hasKey {
+			return true
+		}
 	}
 
 	return false
+}
+
+func (t *Token) getAppRoles(app string) (roles map[string]string, err error) {
+	var res = map[string]string{}
+	return res, nil
 }
 
 // GetJwt is to get raw jwt token
@@ -120,6 +131,11 @@ func parseAccessToken(auth string, token *Token) (err error) {
 	if err := json.Unmarshal(content, &token.Content); err != nil {
 		return err
 	}
+
+	fmt.Printf("%v \n", string(content))
+
+	fmt.Printf("token is %v \n", token.Content.ResourceAccess)
+
 	token.Signature = splitAccessToken[2]
 
 	return nil
