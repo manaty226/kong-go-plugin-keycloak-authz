@@ -86,3 +86,7 @@ func Test_Keycloak(t *testing.T) {
 	}
 
 }
+
+func Test_Protect(t *testing.T) {
+
+}
