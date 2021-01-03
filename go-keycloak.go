@@ -58,7 +58,7 @@ func (conf Config) Access(kong *pdk.PDK) {
 	} else if conf.Mode == "Protect" {
 		isAuthorized = kc.Protect(conf.Rules)
 	} else {
-		kong.Log.Err("mode setting error. Not protected.")
+		kong.Log.Err("mode setting error. All accesses are denied.")
 	}
 
 	if !isAuthorized {

@@ -10,7 +10,6 @@ dirs=$(find ./* -maxdepth 0 -type d)
 for dir in $dirs;
 do
     if [ $dir != "./test" ]; then
-        echo $dir
         cd $dir
         go test
         cd ../

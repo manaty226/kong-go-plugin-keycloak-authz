@@ -30,7 +30,7 @@ var ServerURL string = "http://localhost:8080/auth"
 var Realm string = "test"
 var ResponseMode string = "permissions"
 
-func getToken() (token string, err error) {
+func getUserToken() (token string, err error) {
 	values := url.Values{}
 
 	values.Add("grant_type", "password")
@@ -65,14 +65,48 @@ func getToken() (token string, err error) {
 	return kcRes.AccessToken, nil
 }
 
-func Test_Keycloak(t *testing.T) {
-	accessToken, err := getToken()
+func getClientToken() (token string, err error) {
+	values := url.Values{}
+
+	values.Add("grant_type", "client_credentials")
+	values.Add("client_id", ClientID)
+	values.Add("client_secret", ClientSecret)
+
+	req, err := http.NewRequest(
+		"Post",
+		ServerURL+"/realms/test/protocol/openid-connect/token",
+		strings.NewReader(values.Encode()),
+	)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := new(http.Client)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	resBody, _ := ioutil.ReadAll(resp.Body)
+
+	kcRes := new(keycloakTokenRes)
+	if err := json.Unmarshal(resBody, &kcRes); err != nil {
+		return "", fmt.Errorf("cannot read response json")
+	}
+
+	return kcRes.AccessToken, nil
+}
+
+func beforeTestingWithUserToken(t *testing.T) (kc *Keycloak) {
+	accessToken, err := getUserToken()
 	if err != nil {
 		t.Errorf("cannot get token.")
+		return nil
 	}
 
 	newToken, _ := token.NewToken("Bearer " + accessToken)
-	kc := Keycloak{
+	newKc := Keycloak{
 		Token:        newToken,
 		ClientID:     ClientID,
 		Secret:       ClientSecret,
@@ -80,6 +114,31 @@ func Test_Keycloak(t *testing.T) {
 		Realm:        Realm,
 		ResponseMode: ResponseMode,
 	}
+	return &newKc
+}
+
+func beforeTestingWithClientToken(t *testing.T) (kc *Keycloak) {
+	accessToken, err := getClientToken()
+	if err != nil {
+		t.Errorf("cannot get token.")
+		return nil
+	}
+
+	newToken, _ := token.NewToken("Bearer " + accessToken)
+	newKc := Keycloak{
+		Token:        newToken,
+		ClientID:     ClientID,
+		Secret:       ClientSecret,
+		ServerURI:    ServerURL,
+		Realm:        Realm,
+		ResponseMode: ResponseMode,
+	}
+	return &newKc
+
+}
+
+func Test_Keycloak(t *testing.T) {
+	kc := beforeTestingWithUserToken(t)
 
 	if !kc.Enforce([]string{"testResource:testScope"}) {
 		t.Errorf("not authenticated")
@@ -87,6 +146,26 @@ func Test_Keycloak(t *testing.T) {
 
 }
 
-func Test_Protect(t *testing.T) {
+func Test_ProtectByRealmRole(t *testing.T) {
+	kc := beforeTestingWithUserToken(t)
 
+	if !kc.Protect([]string{"realm:offline_access"}) {
+		t.Errorf("not authorized")
+	}
+}
+
+func Test_ProtectByAccountRole(t *testing.T) {
+	kc := beforeTestingWithClientToken(t)
+
+	if !kc.Protect([]string{"account:view-profile"}) {
+		t.Errorf("not authorized")
+	}
+}
+
+func Test_ProtectByAppRole(t *testing.T) {
+	kc := beforeTestingWithClientToken(t)
+
+	if !kc.Protect([]string{"uma_protection"}) {
+		t.Errorf("not authorized")
+	}
 }

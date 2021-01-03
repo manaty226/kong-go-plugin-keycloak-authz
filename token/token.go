@@ -51,17 +51,23 @@ func NewToken(auth string) (token *Token, err error) {
 
 // HasRole checks the token contains arg roles
 func (t *Token) HasRole(roles []string, clientID string) (hasRole bool) {
-	var splitRole []string
-
 	for _, role := range roles {
-		splitRole = strings.Split(role, ":")
+		splitRole := strings.Split(role, ":")
 		if len(splitRole) == 1 {
-			return t.hasApplicationRole(clientID, splitRole[0])
+			if t.hasApplicationRole(clientID, splitRole[0]) {
+				return true
+			}
 		} else if splitRole[0] == "realm" {
-			return t.hasRealmRole(splitRole[1])
+			if t.hasRealmRole(splitRole[1]) {
+				return true
+			}
+		} else {
+			if t.hasApplicationRole(splitRole[0], splitRole[1]) {
+				return true
+			}
 		}
 	}
-	return t.hasApplicationRole(splitRole[0], splitRole[1])
+	return false
 }
 
 // GetJwt is to get raw jwt token
@@ -86,7 +92,6 @@ func (t *Token) hasRealmRole(role string) (hasRole bool) {
 }
 
 func (t *Token) hasApplicationRole(app string, role string) (hasRole bool) {
-
 	if resourceAccess, hasKey := t.Content.ResourceAccess[app]; hasKey {
 		for _, tokenRole := range resourceAccess.Roles {
 			if role == tokenRole {
