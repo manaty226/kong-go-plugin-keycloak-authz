@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/Kong/go-pdk"
 	"github.com/manaty226/kong-go-plugin-keycloak-authz/token"
 )
 
@@ -42,12 +43,12 @@ func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
 }
 
 // Enforce checks permissions of a received token
-func (kc *Keycloak) Enforce(permissions []string) (hasPermit bool) {
+func (kc *Keycloak) Enforce(permissions []string, kong *pdk.PDK) (hasPermit bool) {
 
 	if len(permissions) == 0 {
 		return true
 	}
-	return kc.checkPermissions(handlePermissions(permissions))
+	return kc.checkPermissions(handlePermissions(permissions), kong)
 }
 
 func handlePermissions(permissions []string) (permissionList map[string][]string) {
@@ -64,10 +65,11 @@ func handlePermissions(permissions []string) (permissionList map[string][]string
 	return res
 }
 
-func (kc *Keycloak) checkPermissions(expectedPermissions map[string][]string) (isAuthorized bool) {
+func (kc *Keycloak) checkPermissions(expectedPermissions map[string][]string, kong *pdk.PDK) (isAuthorized bool) {
 
 	_, err := kc.getAuthorization(expectedPermissions)
 	if err != nil {
+		kong.Log.Err(err.Error())
 		return false
 	}
 	return true
@@ -100,7 +102,7 @@ func (kc Keycloak) getAuthorization(expectedPermissions map[string][]string) (pe
 
 	resBody, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("authorization error: %v", resp.StatusCode)
+		return nil, fmt.Errorf("authorization error: %v", string(resBody))
 	}
 
 	permissions = []permission{}

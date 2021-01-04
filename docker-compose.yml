@@ -12,6 +12,8 @@ services:
             KONG_ADMIN_LISTEN: "0.0.0.0:8080"
         ports:
             - 8081:8081
+        links:
+            - keycloak
     
     keycloak:
         container_name: keycloak
@@ -23,8 +25,10 @@ services:
             -Dkeycloak.profile.feature.account_api=disabled
             -Dkeycloak.profile.feature.account2=disabled
             -Dkeycloak.migration.action=import
+            -Dkeycloak.profile.feature.upload_scripts=enabled
             -Dkeycloak.migration.provider=singleFile
             -Dkeycloak.migration.file=/config/test-realm.json
+            -Djboss.as.management.blocking.timeout=1200
             -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
         environment:
             KEYCLOAK_USER: test
@@ -32,10 +36,12 @@ services:
             KEYCLOAK_IMPORT: /config/test-realm.json
         ports:
             - 8080:8080
+
+
     # konga:
     #     image: pantsel/konga
     #     ports:
-    #       - 8080:1337
+    #       - 8082:1337
     #     links:
     #       - kong:kong
     #     container_name: konga

@@ -10,12 +10,12 @@ import (
 
 // Config is a config structure of this plugin
 type Config struct {
-	Mode      string
-	ClientID  string
-	Secret    string
-	ServerURI string
-	Realm     string
-	Rules     []string
+	Mode      string   `json:"mode"`
+	ClientID  string   `json:"client_id"`
+	Secret    string   `json:"secret"`
+	ServerURI string   `json:"server_uri"`
+	Realm     string   `json:"realm"`
+	Rules     []string `json:"rules"`
 }
 
 // New is required for a kong-plugin
@@ -55,7 +55,7 @@ func (conf Config) Access(kong *pdk.PDK) {
 
 	isAuthorized := false
 	if conf.Mode == "Enforce" {
-		isAuthorized = kc.Enforce(conf.Rules)
+		isAuthorized = kc.Enforce(conf.Rules, kong)
 	} else if conf.Mode == "Protect" {
 		isAuthorized = kc.Protect(conf.Rules)
 	} else {

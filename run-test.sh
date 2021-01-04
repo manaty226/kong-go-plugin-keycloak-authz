@@ -2,20 +2,51 @@
 
 export CGO_CPPFLAGS="-Wno-error -Wno-nullability-completeness -Wno-expansion-to-defined -Wno-builtin-requires-header"
 
-root_dir=$(pwd)
-sh ./test/start-keycloak.sh
+function functional_test() {
+    cd ./test/functionalTest
+    go test
+}
 
-dirs=$(find ./* -maxdepth 0 -type d)
+function unit_test() {
+    dirs=$(find $1 -maxdepth 1 -type d)
 
-for dir in $dirs;
+    for dir in $dirs;
+    do
+        if [[ $dir =~ .*/test || $dir =~ .*/.git ]]; then
+            continue
+        else
+            cd $dir
+            go test
+            cd ../
+        fi
+    done
+
+    cd $1
+}
+
+
+while [ "$#" != 0 ]
 do
-    if [ $dir != "./test" ]; then
-        cd $dir
-        go test
-        cd ../
+    if [ "$1" = "--unit" ]; then
+        test_type=unit
+    elif [ "$1" = "--functional" ]; then 
+        test_type=functional
     fi
+    shift
 done
 
-cd $root_dir
+# sh ./test/start-keycloak.sh
 
-sh ./test/stop-keycloak.sh > /dev/null
+cur_dir=$(pwd)
+
+if [ "$test_type" = unit ]; then
+    unit_test $cur_dir
+else
+    functional_test
+fi
+
+# sh ./test/stop-keycloak.sh > /dev/null
+
+
+
+
