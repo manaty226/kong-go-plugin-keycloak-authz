@@ -3,8 +3,8 @@ FROM golang:alpine as builder
 RUN     apk add --no-cache git gcc libc-dev
 RUN     go get github.com/Kong/go-pluginserver
 
-RUN     mkdir -p /go/src/local.packages
-COPY    ./lib/ /go/src/local.packages/
+# RUN     mkdir -p /go/src/local.packages
+# COPY    ./lib/ /go/src/local.packages/
 
 RUN     mkdir /go-plugins
 COPY    ./go-keycloak.go /go-plugins/go-keycloak.go

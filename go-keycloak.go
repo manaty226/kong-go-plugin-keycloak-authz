@@ -45,11 +45,12 @@ func (conf Config) Access(kong *pdk.PDK) {
 	}
 
 	kc := keycloak.Keycloak{
-		Token:     t,
-		ClientID:  conf.ClientID,
-		Secret:    conf.Secret,
-		ServerURI: conf.ServerURI,
-		Realm:     conf.Realm,
+		Token:        t,
+		ClientID:     conf.ClientID,
+		Secret:       conf.Secret,
+		ServerURI:    conf.ServerURI,
+		Realm:        conf.Realm,
+		ResponseMode: "permissions",
 	}
 
 	isAuthorized := false

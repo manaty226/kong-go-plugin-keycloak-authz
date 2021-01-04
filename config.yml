@@ -7,4 +7,10 @@ services:
   plugins:
   - name: go-keycloak
     config:
-      message: hello
+      Mode: Enforce
+      ClientID: test-client
+      Secret: ba15024a-725b-45ea-bac2-c70332e4c4d7
+      ServerURI: http://keycloak:8080/auth
+      Realm: test
+      Rules:
+        - testResource:testScope

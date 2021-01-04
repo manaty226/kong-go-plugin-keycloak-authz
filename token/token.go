@@ -81,13 +81,11 @@ func (t *Token) IsExpired() (isExpired bool) {
 }
 
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
-
 	for _, tokenRole := range t.Content.RealmAccess.Roles {
 		if role == tokenRole {
 			return true
 		}
 	}
-
 	return false
 }
 
