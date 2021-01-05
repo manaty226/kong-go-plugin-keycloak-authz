@@ -14,7 +14,7 @@ func Test_Keycloak(t *testing.T) {
 	token := getUserToken()
 
 	res := client.Send(
-		"http://localhost:8081",
+		"http://kong:8081",
 		"GET",
 		map[string]string{},
 		map[string]string{
@@ -34,7 +34,7 @@ func getUserToken() (token string) {
 		ClientSecret: "ba15024a-725b-45ea-bac2-c70332e4c4d7",
 		UserName:     "test",
 		Password:     "test",
-		ServerURL:    "http://localhost:8080/auth",
+		ServerURL:    "http://keycloak:8080/auth",
 	}
 
 	accessToken, _ := client.GetUserToken(conf)

@@ -3,8 +3,8 @@
 export CGO_CPPFLAGS="-Wno-error -Wno-nullability-completeness -Wno-expansion-to-defined -Wno-builtin-requires-header"
 
 function functional_test() {
-    cd ./test/functionalTest
-    go test
+    cd ./test/
+    sh test-client.sh
 }
 
 function unit_test() {

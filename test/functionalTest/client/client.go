@@ -48,8 +48,6 @@ func Send(serverURI string, method string, bodies map[string]string, headers map
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("%v \n", req)
-
 	return resp
 }
 
