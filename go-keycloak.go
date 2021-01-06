@@ -55,7 +55,7 @@ func (conf Config) Access(kong *pdk.PDK) {
 
 	isAuthorized := false
 	if conf.Mode == "Enforce" {
-		isAuthorized = kc.Enforce(conf.Rules, kong)
+		isAuthorized = kc.Enforce(conf.Rules)
 	} else if conf.Mode == "Protect" {
 		isAuthorized = kc.Protect(conf.Rules)
 	} else {

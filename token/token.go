@@ -1,6 +1,7 @@
 package token
 
 import (
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -19,12 +20,14 @@ type Token struct {
 	jwt       string
 	Header    jwtHeader
 	Content   jwtContent
-	Signature string
+	Signature []byte
+	signed    string
 }
 
 type jwtHeader struct {
 	Alg string `json:"alg"`
 	Typ string `json:"typ"`
+	Kid string `json:"kid"`
 }
 
 type jwtContent struct {
@@ -80,6 +83,14 @@ func (t *Token) IsExpired() (isExpired bool) {
 	return t.Content.Exp < time.Now().Unix()
 }
 
+// IsValidSignature check signature of jwt
+func (t *Token) IsValidSignature(retrieveKey func() *rsa.PublicKey) (isValid bool) {
+	if retrieveKey() == nil {
+		return false
+	}
+	return verify(t.signed, t.Signature, retrieveKey())
+}
+
 func (t *Token) hasRealmRole(role string) (hasRole bool) {
 	for _, tokenRole := range t.Content.RealmAccess.Roles {
 		if role == tokenRole {
@@ -121,7 +132,12 @@ func parseAccessToken(auth string, token *Token) (err error) {
 		return err
 	}
 
-	token.Signature = splitAccessToken[2]
+	signature, err := base64.RawURLEncoding.DecodeString(splitAccessToken[2])
+	if err != nil {
+		return err
+	}
+	token.Signature = signature
+	token.signed = splitAccessToken[0] + "." + splitAccessToken[1]
 
 	return nil
 }

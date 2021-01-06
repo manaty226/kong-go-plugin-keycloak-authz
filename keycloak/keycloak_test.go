@@ -169,3 +169,10 @@ func Test_ProtectByAppRole(t *testing.T) {
 		t.Errorf("not authorized")
 	}
 }
+func Test_ProtectNull(t *testing.T) {
+	kc := beforeTestingWithClientToken(t)
+
+	if !kc.Protect([]string{}) {
+		t.Errorf("not authorized")
+	}
+}

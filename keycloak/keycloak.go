@@ -1,6 +1,9 @@
 package keycloak
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +11,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Kong/go-pdk"
 	"github.com/manaty226/kong-go-plugin-keycloak-authz/token"
 )
 
@@ -33,9 +35,20 @@ type permission struct {
 	Scopes []string `json:"scopes"`
 }
 
+type certs struct {
+	Keys map[string][]struct {
+		Alg string   `json:alg`
+		Kid string   `json:kid`
+		Kty string   `json:kty`
+		N   string   `json:n`
+		X5c []string `json:x5c`
+	} `json:"keys"`
+}
+
 // Protect checks authentication and role of a received token
 func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
 	if len(roles) == 0 {
+		kc.Token.IsValidSignature(kc.getKeyFromKeycloak)
 		return true
 	}
 
@@ -43,12 +56,11 @@ func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
 }
 
 // Enforce checks permissions of a received token
-func (kc *Keycloak) Enforce(permissions []string, kong *pdk.PDK) (hasPermit bool) {
-
+func (kc *Keycloak) Enforce(permissions []string) (hasPermit bool) {
 	if len(permissions) == 0 {
 		return true
 	}
-	return kc.checkPermissions(handlePermissions(permissions), kong)
+	return kc.checkPermissions(handlePermissions(permissions))
 }
 
 func handlePermissions(permissions []string) (permissionList map[string][]string) {
@@ -65,11 +77,10 @@ func handlePermissions(permissions []string) (permissionList map[string][]string
 	return res
 }
 
-func (kc *Keycloak) checkPermissions(expectedPermissions map[string][]string, kong *pdk.PDK) (isAuthorized bool) {
+func (kc *Keycloak) checkPermissions(expectedPermissions map[string][]string) (isAuthorized bool) {
 
 	_, err := kc.getAuthorization(expectedPermissions)
 	if err != nil {
-		kong.Log.Err(err.Error())
 		return false
 	}
 	return true
@@ -119,6 +130,29 @@ func createReqPermissions(values *url.Values, permissionList map[string][]string
 			values.Add("permission", permission)
 		}
 	}
+}
+
+func (kc Keycloak) getKeyFromKeycloak() *rsa.PublicKey {
+	certURL := kc.ServerURI + "/realms/" + kc.Realm + "/protocol/openid-connect/certs"
+	res, err := http.Get(certURL)
+	if err != nil {
+		return nil
+	}
+	defer res.Body.Close()
+	resBody, err := ioutil.ReadAll(res.Body)
+	cert := certs{}
+	if err := json.Unmarshal(resBody, &cert.Keys); err != nil {
+		fmt.Printf(err.Error())
+		return nil
+	}
+	for _, key := range cert.Keys["keys"] {
+		if key.Kid == kc.Token.Header.Kid {
+			decodedCert, _ := base64.StdEncoding.DecodeString(key.X5c[0])
+			public, _ := x509.ParseCertificate(decodedCert)
+			return public.PublicKey.(*rsa.PublicKey)
+		}
+	}
+	return nil
 }
 
 func hasPermission(permissions []permission, expectedPermission map[string][]string) (isIncluded bool) {
