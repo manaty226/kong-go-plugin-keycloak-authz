@@ -48,7 +48,7 @@ type certs struct {
 // Protect checks authentication and role of a received token
 func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
 	if len(roles) == 0 {
-		kc.Token.IsValidSignature(kc.getKeyFromKeycloak)
+		kc.Token.IsValidSignature(kc.getSigKeyFromKeycloak)
 		return true
 	}
 
@@ -132,7 +132,7 @@ func createReqPermissions(values *url.Values, permissionList map[string][]string
 	}
 }
 
-func (kc Keycloak) getKeyFromKeycloak() *rsa.PublicKey {
+func (kc Keycloak) getSigKeyFromKeycloak() *rsa.PublicKey {
 	certURL := kc.ServerURI + "/realms/" + kc.Realm + "/protocol/openid-connect/certs"
 	res, err := http.Get(certURL)
 	if err != nil {
