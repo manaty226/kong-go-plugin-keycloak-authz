@@ -35,6 +35,7 @@ type jwtContent struct {
 	Sub            string           `json:"sub"`
 	Iss            string           `json:"iss"`
 	Aud            string           `json:"aud"`
+	Azp            string           `json:"azp"`
 	RealmAccess    roles            `json:"realm_access"`
 	ResourceAccess map[string]roles `json:"resource_access"`
 }
@@ -78,9 +79,19 @@ func (t *Token) GetJwt() (jwt string) {
 	return t.jwt
 }
 
+// IsValidToken checks the token contents and its signature
+func (t *Token) IsValidToken(retrieveKey func() *rsa.PublicKey, azp string) (isValid bool) {
+	return !t.IsExpired() && t.IsValidAzp(azp) && t.IsValidSignature(retrieveKey)
+}
+
 // IsExpired checks if the token is expired
 func (t *Token) IsExpired() (isExpired bool) {
 	return t.Content.Exp < time.Now().Unix()
+}
+
+// IsValidAzp checks if token azp is same as this client
+func (t *Token) IsValidAzp(azp string) (isValid bool) {
+	return t.Content.Azp == azp
 }
 
 // IsValidSignature check signature of jwt

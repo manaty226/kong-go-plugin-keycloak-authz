@@ -47,19 +47,26 @@ type certs struct {
 
 // Protect checks authentication and role of a received token
 func (kc *Keycloak) Protect(roles []string) (hasPermit bool) {
-	if len(roles) == 0 {
-		kc.Token.IsValidSignature(kc.getSigKeyFromKeycloak)
-		return true
+	if !kc.Token.IsValidToken(kc.getSigKeyFromKeycloak, kc.ClientID) {
+		return false
 	}
 
+	if len(roles) == 0 {
+		return true
+	}
 	return kc.Token.HasRole(roles, kc.ClientID)
 }
 
 // Enforce checks permissions of a received token
 func (kc *Keycloak) Enforce(permissions []string) (hasPermit bool) {
+	if !kc.Token.IsValidToken(kc.getSigKeyFromKeycloak, kc.ClientID) {
+		return false
+	}
+
 	if len(permissions) == 0 {
 		return true
 	}
+
 	return kc.checkPermissions(handlePermissions(permissions))
 }
 

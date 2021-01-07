@@ -18,7 +18,3 @@ func verify(signed string, signature []byte, key *rsa.PublicKey) (isValid bool) 
 
 	return true
 }
-
-func getJWK() (key string) {
-	return ""
-}
