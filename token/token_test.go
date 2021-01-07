@@ -1,6 +1,9 @@
 package token
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +15,8 @@ import (
 
 var jwt string = "Bearer " +
 	"eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJYTy1sY1VuYWFtOFg2X2FCXzhaVUx3YTh0cUs0X1NNUHhGaDRsRVg5TzR3In0.eyJleHAiOjE2MDg2MzYyOTEsImlhdCI6MTYwODYzNjIzMSwianRpIjoiNzE0NWFiMWYtZTJhNS00MTZkLWJlZTQtMmUyNjU1OWZjNDM1IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJkNWU5OTRkZi1jYTZjLTQxYTUtYjM0YS03Y2EwNDc1NzQwYWIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ0ZXN0LWNsaWVudCIsInNlc3Npb25fc3RhdGUiOiJkMzUyNDhiYi0xODRlLTQ2ZjQtOGY2OC01ZTQ1YTcwNjRjNjkiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ0ZXN0In0.U2aih1sKy5fy0CcrPfXwvO94_UI-mKsXQ34rlNrKJgseAEVtn_fpdA2UO9JEjqZ6YDfuMB4DN-nBT6TYjSwrYlBVGl4ofihRY_4VjhzdtF726GvRyNRRRmslrSf6z6aycclwqms8qOi67C7Pn2QKhhbT8zckcKQQz87B2H3cwOhCfbCcGtYdRbICs7YForX6h7ahpvP79qzTk5-5omEgHl8J6NTs9ykPPU7okqpd9jP8RCjDCYTPsqYcTxFckRjSZeJr3J7hu0qGp1Z01fC7Ppgwlm2jTGSiPGp5LNWzdchNLKRJb77ogROM32wvoz1MaOhuMzk9Dx56QfwDBr1E0A"
+
+var testCert string = "MIIClzCCAX8CBgF2o98FyzANBgkqhkiG9w0BAQsFADAPMQ0wCwYDVQQDDAR0ZXN0MB4XDTIwMTIyNzExMDI1MFoXDTMwMTIyNzExMDQzMFowDzENMAsGA1UEAwwEdGVzdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMaeM/hefNuqqzpa57BEUsyI6ml/kKG5ptmngCCkIabkJU0YXZAOWYFUb0xvaSQhrviS28jRvo/zhtdFndcKq9oZJPiek1R1vW6fskO0oDp4MvHblakV0URipAc5X2vBwjY1lEH5qd3lGdYFg9CgFdeqZnlv8MW4/qBBBaiZkDxnriQaaof2RdEv7d+mvo8B2MKJbYJ3NwEi10GxuEFBtqMgNY4wWTdie71yP/CWuXnajV2AbLqs/hAn4VlPA9nW8cXrXj41ES1swHnJ/zHnubrMkbPgVe50uoq5SyqNOewguZHFMlY+0wFGGqnlNkGCXBoxTyd4OT1QweTpEhl39NcCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAIzlXhxJTleUOohdczW+/Nyr8T1GZ4MLPovtKwuI17ZSebC+WLbvamoYGc4wG1KrUwInv0vHxaTxVzZGEo1FjUu7RZhwf9b3E6DIhiUr2Hv/UB+PJ2dbxZGbMVA3uzUz/qPwfcv+c0dtXN+tQbTSPdkYPqSe6d8LgUGL9vZ0ZefFwAOFrwIdrNnUilbq+wrVhPS+pkxzIvAUptMPE6nRbSIim5sEwBtaodAzzDfUQrZ6PNQn5MCaN/8RXwP8evMpXeDoMb0ofLhoxOAlyjgKYxZxm/qOWGOMLKF5XHc7na3xKMRwB5By4EgudDh06YX1FUHffkxWf+VM5IqCGgzcASA=="
 
 type keycloakTokenRes struct {
 	AccessToken string `json:"access_token"`
@@ -116,7 +121,13 @@ func Test_Sign(t *testing.T) {
 	token, _ := getUserToken()
 	accessToken, _ := NewToken("Bearer " + token)
 
-	if accessToken.IsValidSignature() != true {
+	keyFunc := func() *rsa.PublicKey {
+		decodedCert, _ := base64.StdEncoding.DecodeString(testCert)
+		public, _ := x509.ParseCertificate(decodedCert)
+		return public.PublicKey.(*rsa.PublicKey)
+	}
+
+	if accessToken.IsValidSignature(keyFunc) != true {
 		t.Errorf("invalid Signature")
 	}
 }
