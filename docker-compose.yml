@@ -37,13 +37,12 @@ services:
         ports:
             - 8080:8080
 
-
-    # konga:
-    #     image: pantsel/konga
-    #     ports:
-    #       - 8082:1337
-    #     links:
-    #       - kong:kong
-    #     container_name: konga
-    #     environment:
-    #       - NODE_ENV=production
+    konga:
+        image: pantsel/konga
+        ports:
+          - 8082:1337
+        links:
+          - kong:kong
+        container_name: konga
+        environment:
+          - NODE_ENV=production
